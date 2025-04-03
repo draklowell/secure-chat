@@ -1,54 +1,47 @@
-import socket
+"""
+Client module for a chat application.
+"""
+
 import threading
 
-class Client:
-    def __init__(self, server_ip: str, port: int, username: str) -> None:
-        self.server_ip = server_ip
-        self.port = port
-        self.username = username
-
-    def init_connection(self):
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self.s.connect((self.server_ip, self.port))
-        except Exception as e:
-            print("[client]: could not connect to server: ", e)
-            return
-
-        self.s.send(self.username.encode())
-
-        # create key pairs
-
-        # exchange public keys
-
-        # receive the encrypted secret key
-
-        message_handler = threading.Thread(target=self.read_handler,args=())
-        message_handler.start()
-        input_handler = threading.Thread(target=self.write_handler,args=())
-        input_handler.start()
-
-    def read_handler(self): 
-        while True:
-            message = self.s.recv(1024).decode()
-
-            # decrypt message with the secrete key
-
-            # ... 
+from crypto.rsa import generate_keys
+from protocol.client import Client
 
 
-            print(message)
+def read(client: Client):
+    """
+    Read messages from the server and print them to the console.
+    """
+    while True:
+        message = client.recv()
+        print(message)
 
-    def write_handler(self):
-        while True:
-            message = input()
 
-            # encrypt message with the secrete key
+def send(client: Client):
+    """
+    Send messages from the console to the server.
+    """
+    while True:
+        message = input()
 
-            # ...
+        if message == ":q":
+            client.disconnect()
+            break
+        elif message.startswith("::"):
+            message = message[1:]
 
-            self.s.send(message.encode())
+        client.send(message)
+
+
+def main():
+    """
+    Main function to run the client.
+    """
+    client = Client(input("Enter you username: "), *generate_keys())
+    client.connect("127.0.0.1", 9003)
+    threading.Thread(target=read, args=(client,), daemon=True).start()
+    send(client)
+
 
 if __name__ == "__main__":
-    cl = Client("127.0.0.1", 9001, "b_g")
-    cl.init_connection()
+    main()
