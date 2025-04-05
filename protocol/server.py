@@ -163,8 +163,6 @@ class Server:
         Args:
             message: The message to broadcast.
         """
-        # Actually a little unefficient because of encrypting message
-        # for each client separately, but this is a simple example
         for client in self.clients.values():
             client.session.send(f"{self.chatname}: {message}".encode())
 

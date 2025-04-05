@@ -90,8 +90,6 @@ class Connection:
                 self._send_chunk(chunk, is_last)
                 offset += chunk_size
 
-            # print(f"Sent packet: {data!r}")
-
     def recv(self) -> bytes:
         """
         Receive data in chunks from the socket connection.
@@ -107,7 +105,5 @@ class Connection:
             while not is_last:
                 chunk, is_last = self._recv_chunk()
                 data += chunk
-
-            # print(f"Received packet: {data!r}")
 
             return data

@@ -9,6 +9,7 @@ class SHA256:
     Constants:
         HASH_SIZE: Size of the hash in bytes.
     """
+
     HASH_SIZE = 32
 
     @staticmethod
