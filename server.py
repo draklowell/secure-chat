@@ -4,7 +4,6 @@ Server module for a chat application.
 
 import threading
 
-from crypto.aes import generate_key
 from protocol.server import Server
 
 
@@ -24,12 +23,28 @@ def broadcast(server: Server):
         server.broadcast(message)
 
 
-if __name__ == "__main__":
-    server = Server.create(
-        "127.0.0.1", 9003, 1, generate_key(), input("Enter chatname: ")
-    )
+def main():
+    """
+    Main function to run the server.
+    """
+    chatname = input("Enter chat name: ")
+    host = input("Enter the server address: ").split(":")
+    if not host:
+        host = "localhost"
+
+    if len(host) == 2:
+        hostname, port = host
+        port = int(port)
+    else:
+        hostname, port = host[0], 9000
+
+    server = Server.create(hostname, port, 100, chatname)
     try:
         threading.Thread(target=server.listen, daemon=True).start()
         broadcast(server)
     finally:
         server.close()
+
+
+if __name__ == "__main__":
+    main()

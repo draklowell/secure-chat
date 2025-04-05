@@ -4,7 +4,6 @@ Client module for a chat application.
 
 import threading
 
-from crypto.rsa import generate_keys
 from protocol.client import Client
 
 
@@ -37,8 +36,18 @@ def main():
     """
     Main function to run the client.
     """
-    client = Client(input("Enter you username: "), *generate_keys())
-    client.connect("127.0.0.1", 9003)
+    username = input("Enter your name: ")
+    host = input("Enter the server address: ").split(":")
+    if not host:
+        host = "localhost"
+    if len(host) == 2:
+        hostname, port = host
+        port = int(port)
+    else:
+        hostname, port = host[0], 9000
+
+    client = Client(username)
+    client.connect(hostname, port)
     threading.Thread(target=read, args=(client,), daemon=True).start()
     send(client)
 

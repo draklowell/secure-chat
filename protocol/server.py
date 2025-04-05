@@ -5,11 +5,30 @@ This module implements a simple server for chat application.
 import socket
 import string
 import threading
+from dataclasses import dataclass
 
 from crypto.aes import Key
-from crypto.rsa import PublicKey
+from crypto.rsa import PrivateKey, PublicKey, generate_keys
 from protocol.connection import Connection
 from protocol.session import Session
+
+
+@dataclass
+class ConnectedClient:
+    """
+    Represents a connected client.
+
+    Attributes:
+        username: The username of the client.
+        conn: The connection object for the client.
+        session: The session object for the client.
+        key: The encryption key for the client.
+    """
+
+    username: str
+    conn: Connection
+    session: Session
+    key: Key
 
 
 class Server:
@@ -18,22 +37,27 @@ class Server:
 
     Attributes:
         sock: The socket object used for listening for incoming connections.
-        key: The encryption key used for securing messages.
+        public_key: The public key of the server.
+        private_key: The private key of the server.
+        key_size: The size of the AES key in bytes. Default is 32 bytes.
         chatname: The chatname of the server.
         clients: A list of connected clients.
     """
 
     sock: socket.socket
-    key: Key
+    public_key: PublicKey
+    private_key: PrivateKey
+    key_size: int
     chatname: str
-    clients: dict[str, tuple[Connection, Session]]
+    clients: dict[str, ConnectedClient]
 
-    def __init__(self, sock: socket.socket, key: Key, chatname: str) -> None:
+    def __init__(self, sock: socket.socket, chatname: str, key_size: int = 32) -> None:
         if not self.validate_name(chatname):
             raise ValueError("Invalid chatname")
 
         self.sock = sock
-        self.key = key
+        self.private_key, self.public_key = generate_keys()
+        self.key_size = key_size
         self.chatname = chatname
         self.clients = {}
 
@@ -59,7 +83,12 @@ class Server:
 
     @classmethod
     def create(
-        cls, address: str, port: int, backlog: int, key: Key, chatname: str
+        cls,
+        address: str,
+        port: int,
+        backlog: int,
+        chatname: str,
+        key_size: int = 32,
     ) -> "Server":
         """
         Create a server socket and bind it to the specified address and port.
@@ -68,51 +97,64 @@ class Server:
             address: The server address.
             port: The server port.
             backlog: The maximum number of queued connections.
-            key: The encryption key to use.
             chatname: The chatname of the server.
+            key_size: The size of the AES key in bytes. Default is 32 bytes.
+
+        Returns:
+            An instance of the Server class.
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind((address, port))
         sock.listen(backlog)
-        return cls(sock, key, chatname)
+        return cls(sock, chatname, key_size)
 
-    def accept(self) -> str:
+    def accept(self) -> ConnectedClient | None:
         """
         Accept an incoming connection and return the username of the client.
 
         Returns:
-            The username of the client.
+            A ConnectedClient object if the connection is accepted, None otherwise.
         """
+        # 1. Establish connection
         conn, _ = self.sock.accept()
         conn = Connection(conn)
-        username = conn.recv().decode()
+
+        # 2. Exchange public keys
+        conn.send(self.public_key.to_bytes())
+        client_public = PublicKey.from_bytes(conn.recv())
+
+        # 3. Receive username
+        username = self.private_key.decrypt(conn.recv()).decode()
         if username == self.chatname or username in self.clients:
             conn.close()
             return None
 
-        public_key = PublicKey.from_bytes(conn.recv())
-        crypto = public_key.encrypt(self.key.to_bytes())
-        conn.send(crypto)
+        # 4. Send session key
+        key = Key.generate(self.key_size)
+        key_cipher = client_public.encrypt(key.to_bytes())
+        conn.send(key_cipher)
 
-        session = Session(conn, self.key)
+        # 5. Establish session
+        session = Session(conn, key)
 
         self.broadcast(f"{username} has joined the chat")
         session.send(f'Welcome to the chat "{self.chatname}"'.encode())
 
-        self.clients[username] = (conn, session)
+        client = ConnectedClient(username, conn, session, key)
+        self.clients[username] = client
 
-        return username
+        return client
 
     def listen(self):
         """
         Listen for incoming connections and handle them in separate threads.
         """
         while True:
-            username = self.accept()
-            if username is None:
+            client = self.accept()
+            if client is None:
                 continue
 
-            threading.Thread(target=self.handle, args=(username,), daemon=True).start()
+            threading.Thread(target=self.handle, args=(client,), daemon=True).start()
 
     def broadcast(self, message: str):
         """
@@ -123,32 +165,31 @@ class Server:
         """
         # Actually a little unefficient because of encrypting message
         # for each client separately, but this is a simple example
-        for _, session in self.clients.values():
-            session.send(f"{self.chatname}: {message}".encode())
+        for client in self.clients.values():
+            client.session.send(f"{self.chatname}: {message}".encode())
 
-    def handle(self, username: str):
+    def handle(self, client: ConnectedClient):
         """
         Handle incoming messages from a client and broadcast them to all other clients.
 
         Args:
-            username: The username of the client.
+            client: The connected client.
         """
-        _, session = self.clients[username]
         while True:
-            message = session.recv()
-            for other_username, (_, other_session) in self.clients.items():
-                if other_username == username:
+            message = client.session.recv()
+            for other in self.clients.values():
+                if other.username == client.username:
                     continue
 
-                other_session.send(f"{username}: ".encode() + message)
+                other.session.send(f"{client.username}: ".encode() + message)
 
     def close(self):
         """
         Close the server socket and all client connections.
         """
-        for _, (conn, _) in self.clients.items():
+        for client in self.clients.values():
             try:
-                conn.close()
+                client.conn.close()
             except:
                 pass
 

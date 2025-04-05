@@ -3,7 +3,7 @@ Client class for handling communication with a server.
 """
 
 from crypto.aes import Key
-from crypto.rsa import PrivateKey, PublicKey
+from crypto.rsa import PublicKey, generate_keys
 from protocol.connection import Connection
 from protocol.session import Session
 
@@ -22,18 +22,12 @@ class Client:
     """
 
     username: str
-    private_key: PrivateKey
-    public_key: PublicKey
     conn_key: Key | None
     conn: Connection | None
     session: Session | None
 
-    def __init__(
-        self, username: str, private_key: PrivateKey, public_key: PublicKey
-    ) -> None:
+    def __init__(self, username: str) -> None:
         self.username = username
-        self.private_key = private_key
-        self.public_key = public_key
         self.conn_key = None
         self.conn = None
         self.session = None
@@ -46,12 +40,22 @@ class Client:
             address: The server address.
             port: The server port.
         """
+        # 1. Establish connection
         self.conn = Connection.connect(address, port)
 
-        self.conn.send(self.username.encode())
-        self.conn.send(self.public_key.to_bytes())
+        # 2. Exchange public keys
+        client_private, client_public = generate_keys()
+        server_public = PublicKey.from_bytes(self.conn.recv())
+        self.conn.send(client_public.to_bytes())
 
-        self.conn_key = Key.from_bytes(self.conn.recv())
+        # 3. Send username
+        self.conn.send(server_public.encrypt(self.username.encode()))
+
+        # 4. Receive session key
+        key_data = client_private.decrypt(self.conn.recv())
+        self.conn_key = Key.from_bytes(key_data)
+
+        # 5. Establish session
         self.session = Session(self.conn, self.conn_key)
 
     def disconnect(self):
