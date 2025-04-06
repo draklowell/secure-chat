@@ -30,13 +30,19 @@ def main():
     chatname = input("Enter chat name: ")
     host = input("Enter the server address: ").split(":")
 
+    hostname = ""
+    port = 9000
     if len(host) == 2:
         hostname, port = host
         port = int(port)
-    else:
-        hostname, port = host[0], 9000
+    elif len(host) == 1:
+        hostname = host[0]
+
+    if not hostname:
+        hostname = "localhost"
 
     server = Server.create(hostname, port, 100, chatname, 32, 512, 16)
+    print(f"Ready to accept connections on {hostname}:{port}...")
     try:
         threading.Thread(target=server.listen, daemon=True).start()
         broadcast(server)

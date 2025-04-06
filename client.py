@@ -38,13 +38,17 @@ def main():
     """
     username = input("Enter your name: ")
     host = input("Enter the server address: ").split(":")
-    if not host:
-        host = "localhost"
+
+    hostname = ""
+    port = 9000
     if len(host) == 2:
         hostname, port = host
         port = int(port)
-    else:
-        hostname, port = host[0], 9000
+    elif len(host) == 1:
+        hostname = host[0]
+
+    if not hostname:
+        hostname = "localhost"
 
     client = Client(username)
     client.connect(hostname, port)
