@@ -10,18 +10,22 @@ from protocol.connection import Connection
 class Session:
     """
     Session class for handling secure communication over a connection.
+    Different keys for sending and receiving data are used to ensure iv synchronization.
 
     Attributes:
         conn: The connection object used for sending and receiving data.
-        key: The encryption key used for securing messages.
+        recv_key: The key used for incoming messages.
+        send_key: The key used for outgoing messages.
     """
 
     conn: Connection
-    key: Key
+    recv_key: Key
+    send_key: Key
 
     def __init__(self, conn: Connection, key: Key):
         self.conn = conn
-        self.key = key
+        self.recv_key = key.copy()
+        self.send_key = key.copy()
 
     def send(self, message: bytes):
         """
@@ -32,7 +36,7 @@ class Session:
         """
         hash_ = SHA256.hash(message)
         data = message + hash_
-        crypto = self.key.encrypt(data)
+        crypto = self.send_key.encrypt(data)
         self.conn.send(crypto)
 
     def recv(self) -> bytes:
@@ -43,7 +47,7 @@ class Session:
             The received message.
         """
         crypto = self.conn.recv()
-        data = self.key.decrypt(crypto)
+        data = self.recv_key.decrypt(crypto)
         message = data[: -SHA256.HASH_SIZE]
         hash_ = data[-SHA256.HASH_SIZE :]
 

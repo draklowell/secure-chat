@@ -32,6 +32,15 @@ class Key:
         self.key = key
         self.iv = iv
 
+    def copy(self) -> "Key":
+        """
+        Creates a copy of the Key instance.
+
+        Returns:
+            A new Key instance with the same key and IV.
+        """
+        return Key(self.key, self.iv)
+
     def encrypt(self, message: bytes) -> bytes:
         """
         Encrypts a message using AES in CBC mode.
