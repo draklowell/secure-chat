@@ -12,7 +12,10 @@ def broadcast(server: Server):
     Broadcast messages to all connected clients.
     """
     while True:
-        message = input()
+        try:
+            message = input()
+        except (KeyboardInterrupt, EOFError):
+            message = ":q"
 
         if message == ":q":
             server.close()

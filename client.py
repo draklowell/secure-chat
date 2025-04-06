@@ -21,7 +21,10 @@ def send(client: Client):
     Send messages from the console to the server.
     """
     while True:
-        message = input()
+        try:
+            message = input()
+        except (KeyboardInterrupt, EOFError):
+            message = ":q"
 
         if message == ":q":
             client.disconnect()
@@ -51,6 +54,7 @@ def main():
         hostname = "localhost"
 
     client = Client(username)
+    print("Connecting to server...")
     client.connect(hostname, port)
     threading.Thread(target=read, args=(client,), daemon=True).start()
     send(client)
