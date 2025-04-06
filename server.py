@@ -29,8 +29,6 @@ def main():
     """
     chatname = input("Enter chat name: ")
     host = input("Enter the server address: ").split(":")
-    if not host:
-        host = "localhost"
 
     if len(host) == 2:
         hostname, port = host
@@ -38,7 +36,7 @@ def main():
     else:
         hostname, port = host[0], 9000
 
-    server = Server.create(hostname, port, 100, chatname)
+    server = Server.create(hostname, port, 100, chatname, 32, 512, 16)
     try:
         threading.Thread(target=server.listen, daemon=True).start()
         broadcast(server)

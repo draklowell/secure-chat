@@ -39,7 +39,9 @@ class Server:
         sock: The socket object used for listening for incoming connections.
         public_key: The public key of the server.
         private_key: The private key of the server.
-        key_size: The size of the AES key in bytes. Default is 32 bytes.
+        aes_key_size: The size of the AES key in bytes. Default is 32 bytes.
+        rsa_key_size: The size of the RSA key in bits. Default is 2048 bits.
+        rsa_iterations: The number of iterations for RSA key generation. Default is 64.
         chatname: The chatname of the server.
         clients: A list of connected clients.
     """
@@ -47,17 +49,28 @@ class Server:
     sock: socket.socket
     public_key: PublicKey
     private_key: PrivateKey
-    key_size: int
+    aes_key_size: int
+    rsa_key_size: int
+    rsa_iterations: int
     chatname: str
     clients: dict[str, ConnectedClient]
 
-    def __init__(self, sock: socket.socket, chatname: str, key_size: int = 32) -> None:
+    def __init__(
+        self,
+        sock: socket.socket,
+        chatname: str,
+        aes_key_size: int = 32,
+        rsa_key_size: int = 2048,
+        rsa_iterations: int = 64,
+    ) -> None:
         if not self.validate_name(chatname):
             raise ValueError("Invalid chatname")
 
         self.sock = sock
-        self.private_key, self.public_key = generate_keys()
-        self.key_size = key_size
+        self.aes_key_size = aes_key_size
+        self.rsa_key_size = rsa_key_size
+        self.rsa_iterations = rsa_iterations
+        self.private_key, self.public_key = generate_keys(rsa_key_size, rsa_iterations)
         self.chatname = chatname
         self.clients = {}
 
@@ -88,7 +101,9 @@ class Server:
         port: int,
         backlog: int,
         chatname: str,
-        key_size: int = 32,
+        aes_key_size: int = 32,
+        rsa_key_size: int = 2048,
+        rsa_iterations: int = 64,
     ) -> "Server":
         """
         Create a server socket and bind it to the specified address and port.
@@ -98,7 +113,9 @@ class Server:
             port: The server port.
             backlog: The maximum number of queued connections.
             chatname: The chatname of the server.
-            key_size: The size of the AES key in bytes. Default is 32 bytes.
+            aes_key_size: The size of the AES key in bytes. Default is 32 bytes.
+            rsa_key_size: The size of the RSA key in bits. Default is 2048 bits.
+            rsa_iterations: The number of iterations for RSA key generation. Default is 64.
 
         Returns:
             An instance of the Server class.
@@ -106,7 +123,7 @@ class Server:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind((address, port))
         sock.listen(backlog)
-        return cls(sock, chatname, key_size)
+        return cls(sock, chatname, aes_key_size, rsa_key_size, rsa_iterations)
 
     def accept(self) -> ConnectedClient | None:
         """
@@ -130,7 +147,7 @@ class Server:
             return None
 
         # 4. Send session key
-        key = Key.generate(self.key_size)
+        key = Key.generate(self.aes_key_size)
         key_cipher = client_public.encrypt(key.to_bytes())
         conn.send(key_cipher)
 
