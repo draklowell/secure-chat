@@ -1,4 +1,4 @@
-import random
+import secrets
 
 from crypto.aes.modes import cbc_decrypt, cbc_encrypt
 
@@ -95,9 +95,6 @@ class Key:
         """
         Generates a random AES key and IV.
 
-        NOTE: This is not a secure way to generate keys. For production use, consider using
-            a secure random generator.
-
         Args:
             size: The size of the key in bytes. Must be 16, 24, or 32.
 
@@ -105,6 +102,6 @@ class Key:
             An instance of the Key class with a random key and IV.
         """
         return Key(
-            key=random.randbytes(size),
-            iv=random.randbytes(16),
+            key=secrets.token_bytes(size),
+            iv=secrets.token_bytes(16),
         )
