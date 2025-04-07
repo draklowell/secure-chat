@@ -49,7 +49,7 @@ def main():
         port=port,
         backlog=100,
         chatname=chatname,
-        aes_key_size=32,
+        aes_key_size=256,
         rsa_key_size=1024,
         rsa_iterations=16,
     )

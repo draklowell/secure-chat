@@ -105,12 +105,13 @@ class Key:
         Generates a random AES key and IV.
 
         Args:
-            size: The size of the key in bytes. Must be 16, 24, or 32.
+            size: The size of the key in bits. Must be 128, 192, or 256.
 
         Returns:
             An instance of the Key class with a random key and IV.
         """
+        assert size in {128, 192, 256}, "Key size must be 128, 192, or 256 bits"
         return Key(
-            key=secrets.token_bytes(size),
+            key=secrets.token_bytes(size // 8),
             iv=secrets.token_bytes(16),
         )

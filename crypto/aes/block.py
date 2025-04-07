@@ -196,8 +196,8 @@ def expand_key(key: memoryview, rounds: int) -> list[memoryview]:
     Returns:
         A list of expanded keys for each round.
     """
-    assert len(key) in (16, 24, 32), "Key length must be 16, 24, or 32 bytes"
-    assert rounds in (10, 12, 14), "Number of rounds must be 10, 12, or 14"
+    assert len(key) in {16, 24, 32}, "Key length must be 16, 24, or 32 bytes"
+    assert rounds in {10, 12, 14}, "Number of rounds must be 10, 12, or 14"
 
     key_length = len(key) // 4
     rc = 1

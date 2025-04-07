@@ -39,7 +39,7 @@ class Server:
         sock: The socket object used for listening for incoming connections.
         public_key: The public key of the server.
         private_key: The private key of the server.
-        aes_key_size: The size of the AES key in bytes. Default is 32 bytes.
+        aes_key_size: The size of the AES key in bits. Default is 256 bits.
         rsa_key_size: The size of the RSA key in bits. Default is 2048 bits.
         rsa_iterations: The number of iterations for RSA key generation. Default is 64.
         chatname: The chatname of the server.
@@ -59,7 +59,7 @@ class Server:
         self,
         sock: socket.socket,
         chatname: str,
-        aes_key_size: int = 32,
+        aes_key_size: int = 256,
         rsa_key_size: int = 2048,
         rsa_iterations: int = 64,
     ) -> None:
@@ -101,7 +101,7 @@ class Server:
         port: int,
         backlog: int,
         chatname: str,
-        aes_key_size: int = 32,
+        aes_key_size: int = 256,
         rsa_key_size: int = 2048,
         rsa_iterations: int = 64,
     ) -> "Server":
@@ -113,7 +113,7 @@ class Server:
             port: The server port.
             backlog: The maximum number of queued connections.
             chatname: The chatname of the server.
-            aes_key_size: The size of the AES key in bytes. Default is 32 bytes.
+            aes_key_size: The size of the AES key in bits. Default is 256 bits.
             rsa_key_size: The size of the RSA key in bits. Default is 2048 bits.
             rsa_iterations: The number of iterations for RSA key generation. Default is 64.
 

@@ -27,7 +27,7 @@ def cbc_encrypt(message: bytes, iv: bytes, key: bytes, rounds: int) -> bytes:
         A tuple containing the encrypted message and the last IV used.
     """
     assert len(iv) == 16, "IV must be 16 bytes"
-    assert len(key) in (16, 24, 32), "Key must be 16, 24, or 32 bytes"
+    assert len(key) in {16, 24, 32}, "Key must be 16, 24, or 32 bytes"
     assert len(message) % 16 == 0, "Message length must be a multiple of 16 bytes"
 
     cipher = b""
@@ -58,7 +58,7 @@ def cbc_decrypt(
         A tuple containing the decrypted message and the last IV used.
     """
     assert len(iv) == 16, "IV must be 16 bytes"
-    assert len(key) in (16, 24, 32), "Key must be 16, 24, or 32 bytes"
+    assert len(key) in {16, 24, 32}, "Key must be 16, 24, or 32 bytes"
     assert len(crypto) % 16 == 0, "Cipher length must be a multiple of 16 bytes"
 
     message = b""
