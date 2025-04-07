@@ -53,8 +53,8 @@ def main():
     if not hostname:
         hostname = "localhost"
 
-    client = Client(username)
-    print("Connecting to server...")
+    client = Client(username, 1024, 16)
+    print("Connecting to the server...")
     client.connect(hostname, port)
     threading.Thread(target=read, args=(client,), daemon=True).start()
     send(client)

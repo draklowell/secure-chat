@@ -44,7 +44,7 @@ def main():
     if not hostname:
         hostname = "localhost"
 
-    server = Server.create(hostname, port, 100, chatname, 32, 512, 16)
+    server = Server.create(hostname, port, 100, chatname, 32, 1024, 16)
     print(f"Ready to accept connections on {hostname}:{port}...")
     try:
         threading.Thread(target=server.listen, daemon=True).start()
