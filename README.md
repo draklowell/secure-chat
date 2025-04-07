@@ -58,8 +58,10 @@ For generating keys we use **Fermat's primality test** with the specified number
 
 Message and cipher are treated as large numbers in MSB first byte order.
 
-> [!NOTE]
+> [!WARNING]
 > No padding is applied, which may lead to security issues.
+
+When sharing public keys we just encode the public exponent `e` as a 32-bit number and concatenate it with the modulus `n`, which can be arbitrarily long. Everything is encoded in MSB first byte order.
 
 ### AES-256
 We use AES symmetric encryption for messages, in particular the 256-bit version (yet you can change it in the `server.py`) in Cipher block chaining mode (CBC).
@@ -71,3 +73,14 @@ There are a lot of resources on how AES encrypts single blocks, you can check th
 IV is generated randomly in couple with the key using the Python `secrets` module for secure random values.
 
 The message to be encrypted is broken into blocks of size 16 bytes. We use padding according to PKCS#7 (adding bytes whose value is the length of the padding, if the length of the message is divisible by 16, then we add a block filled with `0x10` value).
+
+When sharing keys we just concatenate key and IV together.
+
+## Place for improvements
+There is no authentication for the user entering, so anyone can join the chat and no actual security is present. It would be great to implement some kind of authentication.
+
+Also great place for improvement is to use padding in RSA, since it may lead to security issues, as mentioned above.
+
+Socket handling is not the best, especially when closing them - it would be great to replace manual closing with context managers.
+
+Fermat's primality test is not very reliable, especially with a small number of iterations, however it is good enough for proof of concept (that is the goal of the lab assignment).
